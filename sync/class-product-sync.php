@@ -224,8 +224,11 @@ class MN_Product_Sync {
         $wc_product->set_manage_stock($manage);
 
         if ($manage) {
-            // موجودی سایت = stock_quantity مجازی (نه real_stock_quantity)
-            $qty = $product->stock_quantity !== null ? intval($product->stock_quantity) : 0;
+            // موجودی ارسالی به سایت = مجموع موجودی واقعی + مجازی
+            $virtual = $product->stock_quantity      !== null ? intval($product->stock_quantity)      : 0;
+            $real    = $product->real_stock_quantity !== null ? intval($product->real_stock_quantity) : 0;
+            $qty     = $virtual + $real;
+
             $wc_product->set_stock_quantity($qty);
             $wc_product->set_stock_status($qty > 0 ? 'instock' : 'outofstock');
         } else {

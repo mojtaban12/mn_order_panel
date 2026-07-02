@@ -179,30 +179,59 @@ class MN_WC_Sales_Sync {
             $stock_updated  = 0;
             $qty            = max(1, intval($item->qty));
 
-            if ($panel_product->manage_stock && $panel_product->stock_quantity !== null) {
-                $stock_before  = intval($panel_product->stock_quantity);
-                $stock_after   = max(0, $stock_before - $qty);
+            if ($panel_product->manage_stock) {
+                $real_before    = intval($panel_product->real_stock_quantity ?? 0);
+                $virtual_before = intval($panel_product->stock_quantity ?? 0);
+
+                $remaining = $qty;
+
+                // ── اول از موجودی واقعی کم کن ──
+                $real_deduct = min($real_before, $remaining);
+                $real_after  = $real_before - $real_deduct;
+                $remaining  -= $real_deduct;
+
+                // ── باقیمانده از موجودی مجازی کم کن ──
+                $virtual_deduct = min($virtual_before, $remaining);
+                $virtual_after  = max(0, $virtual_before - $virtual_deduct);
+
+                $this->db->update('mn_products', [
+                    'real_stock_quantity' => $real_after,
+                    'stock_quantity'      => $virtual_after,
+                ], ['id' => $panel_product->id]);
+
+                if ($real_deduct > 0) {
+                    $this->db->insert('mn_stock_logs', [
+                        'product_id'      => $panel_product->id,
+                        'wp_product_id'   => $item->product_id,
+                        'stock_type'      => 'real',
+                        'change_type'     => 'decrease',
+                        'quantity_before' => $real_before,
+                        'quantity_change' => -$real_deduct,
+                        'quantity_after'  => $real_after,
+                        'reference_type'  => 'order',
+                        'reference_id'    => $order->order_id,
+                        'notes'           => 'سفارش WC #' . $order->order_id . ' (کسر از موجودی واقعی)',
+                    ]);
+                }
+
+                if ($virtual_deduct > 0) {
+                    $this->db->insert('mn_stock_logs', [
+                        'product_id'      => $panel_product->id,
+                        'wp_product_id'   => $item->product_id,
+                        'stock_type'      => 'virtual',
+                        'change_type'     => 'decrease',
+                        'quantity_before' => $virtual_before,
+                        'quantity_change' => -$virtual_deduct,
+                        'quantity_after'  => $virtual_after,
+                        'reference_type'  => 'order',
+                        'reference_id'    => $order->order_id,
+                        'notes'           => 'سفارش WC #' . $order->order_id . ' (کسر از موجودی مجازی)',
+                    ]);
+                }
+
+                $stock_before  = $real_before + $virtual_before;
+                $stock_after   = $real_after  + $virtual_after;
                 $stock_updated = 1;
-
-                // آپدیت موجودی
-                $this->db->update('mn_products',
-                    ['stock_quantity' => $stock_after],
-                    ['id' => $panel_product->id]
-                );
-
-                // لاگ تغییر موجودی
-                $this->db->insert('mn_stock_logs', [
-                    'product_id'      => $panel_product->id,
-                    'wp_product_id'   => $item->product_id,
-                    'stock_type'      => 'virtual',
-                    'change_type'     => 'decrease',
-                    'quantity_before' => $stock_before,
-                    'quantity_change' => -$qty,
-                    'quantity_after'  => $stock_after,
-                    'reference_type'  => 'order',
-                    'reference_id'    => $order->order_id,
-                    'notes'           => 'سفارش WC #' . $order->order_id,
-                ]);
 
                 $result['stock_updated']++;
             }
@@ -267,19 +296,17 @@ class MN_WC_Sales_Sync {
     // ════════════════════════════════════════
 
     private function find_panel_product($wp_product_id, $sku) {
-        // اول با wp_product_id
         if ($wp_product_id) {
             $p = $this->db->get_row(
-                "SELECT id, manage_stock, stock_quantity FROM mn_products WHERE wp_product_id = ? LIMIT 1",
+                "SELECT id, manage_stock, stock_quantity, real_stock_quantity FROM mn_products WHERE wp_product_id = ? LIMIT 1",
                 [intval($wp_product_id)]
             );
             if ($p) return $p;
         }
 
-        // بعد با SKU
         if ($sku) {
             $p = $this->db->get_row(
-                "SELECT id, manage_stock, stock_quantity FROM mn_products WHERE sku = ? LIMIT 1",
+                "SELECT id, manage_stock, stock_quantity, real_stock_quantity FROM mn_products WHERE sku = ? LIMIT 1",
                 [$sku]
             );
             if ($p) return $p;
