@@ -569,8 +569,11 @@ const MN_CONFIG = {
     }
     
     function logout() {
-        window.location.href = 'logout.php';
-    }
+        fetch('../ajax/logout.php', { method: 'POST' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) { window.location.href = res.redirect || 'login.php'; })
+            .catch(function () { window.location.href = 'login.php'; });
+    } 
     
     // بارگذاری اولیه
     $(document).ready(function() {

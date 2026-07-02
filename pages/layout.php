@@ -89,7 +89,7 @@
                     <i class="fas fa-clock"></i>
                     <span>زمان‌بندی خودکار</span>
                 </a>
-                <a href="logout.php" class="menu-item">
+                <a href="#" class="menu-item" onclick="mnLogout(event)">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>خروج</span>
                 </a>
@@ -150,6 +150,16 @@
                 }
             }
         });
+
+        function mnLogout(e) {
+            e.preventDefault();
+            fetch('../ajax/logout.php', { method: 'POST' })
+                .then(function (r) { return r.json(); })
+                .then(function (res) { window.location.href = res.redirect || 'login.php'; })
+                .catch(function () { window.location.href = 'login.php'; });
+        }
+
+
     </script>
     
     <?php if (isset($extra_js)): ?>
