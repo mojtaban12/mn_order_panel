@@ -20,7 +20,7 @@ if (isset($_SESSION['panel_user_id'])) {
     <title>ورود به پنل ثبت سفارش</title>
     
     <!-- Bootstrap RTL -->
-    <link rel="stylesheet" href="../assets/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="../assets/css/all.min.css">
     

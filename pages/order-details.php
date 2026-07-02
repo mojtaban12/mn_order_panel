@@ -31,11 +31,11 @@ $order_id = intval($_GET['id']);
     <title>جزئیات سفارش #<?php echo $order_id; ?> - پنل ثبت سفارش</title>
     
     <!-- Bootstrap RTL -->
-    <link rel="stylesheet" href="../assets/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="../assets/css/all.min.css">
     <!-- SweetAlert2 -->
-    <link rel="stylesheet" href="../assets/css/sweetalert2.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.min.css">
     
     <style>
         body {
@@ -287,9 +287,9 @@ $order_id = intval($_GET['id']);
     <!-- jQuery -->
     <script src="../assets/js/jquery.min.js"></script>
     <!-- Bootstrap -->
-    <script src="../assets/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- SweetAlert2 -->
-    <script src="../assets/js/sweetalert2.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25/dist/sweetalert2.all.min.js"></script>
     
     <script>
         const MN_CONFIG = {

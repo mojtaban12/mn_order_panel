@@ -13,7 +13,7 @@ $currency_symbol = MN_Settings::get('currency_symbol', 'تومان');
 
 $page_title = 'ثبت سفارش جدید - پنل ثبت سفارش';
 $extra_css = '
-<link rel="stylesheet" href="../assets/css/select2.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
 
 <style>
 .select2-container .select2-selection--single{
@@ -140,7 +140,7 @@ $content = ob_get_clean();
 
 $extra_js = '
 
-<script src="../assets/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="../assets/js/state-city-selector.js"></script>
 
     <script>

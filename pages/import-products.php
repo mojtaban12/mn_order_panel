@@ -166,9 +166,9 @@ ob_start();
 <?php
 $content = ob_get_clean();
 $extra_js = '
-<script src="../assets/js/xlsx.full.min.js"></script>
-<script src="../assets/js/persian-date.min.js"></script>
-<script src="../assets/js/persian-datepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/persian-date@1.1.0/dist/persian-date.min.jss"></script>
+<script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
 <script>
     var AJAX = "../ajax/";
     var CUR  = "' . $currency_symbol . '";
