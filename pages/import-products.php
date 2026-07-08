@@ -23,6 +23,10 @@ $extra_css = '
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
 <style>
 .import-layout { display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:start; }
+.import-tab { padding:10px 20px;border:2px solid #e5e7eb;border-radius:9px;background:#fff;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:#6b7280;transition:all .15s; }
+.import-tab.active { border-color:#2563eb;background:#2563eb;color:#fff; }
+.import-pane { display:none; }
+.import-pane.active { display:block; }
 @media(max-width:900px){ .import-layout{grid-template-columns:1fr;} }
 
 .step-card { background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:20px 22px;margin-bottom:16px; }
@@ -72,96 +76,102 @@ $extra_css = '
 ob_start();
 ?>
 
-<div class="import-layout">
+    <div class="import-tabs" style="display:flex;gap:8px;margin-bottom:18px;">
+        <button class="import-tab active" data-tab="new" onclick="switchImportTab('new', this)">
+            📦 محصول کاملاً جدید
+        </button>
+        <button class="import-tab" data-tab="existing" onclick="switchImportTab('existing', this)">
+            🔗 محصولات موجود در سایت
+        </button>
+    </div>
 
-<!-- ── ستون چپ ── -->
-<div>
-
-    <div class="step-card">
-        <div class="step-title"><span class="step-num">۱</span> تنظیمات اولیه</div>
-
-        <div class="fg">
-            <label>دسته‌بندی <span style="color:#ef4444">*</span></label>
-            <select id="sel-cat" class="fc" data-cat-picker>
-                <option value="">— انتخاب کنید —</option>
-                <?php foreach ($cats as $c): ?>
-                <option value="<?php echo $c->id; ?>">
-                    <?php echo $c->parent_name ? htmlspecialchars($c->parent_name) . ' / ' : ''; ?>
-                    <?php echo htmlspecialchars($c->name); ?>
-                </option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-
-        <div class="fg">
-            <label>فروشنده <span style="color:#ef4444">*</span></label>
-            <input type="text" id="inp-supplier" class="fc" placeholder="نام تأمین‌کننده">
-        </div>
-
-        <div class="fg">
-            <label>تاریخ فاکتور</label>
-            <input type="hidden" id="inp-date-val" value="<?php echo date('Y-m-d'); ?>">
-            <input type="text"   id="inp-date-display" class="fc" placeholder="تاریخ شمسی" readonly style="cursor:pointer;">
+    <!-- ══════ تب ۱: محصول جدید (موجود — بدون تغییر) ══════ -->
+    <div class="import-pane active" id="pane-new">
+        <div class="import-layout">
+            <!-- همون محتوای فعلی import-layout شما اینجا -->
         </div>
     </div>
 
-    <div class="step-card">
-        <div class="step-title"><span class="step-num">۲</span> انتخاب فایل</div>
-        <div class="drop-zone" id="drop-zone">
-            <input type="file" id="file-input" accept=".xlsx,.xls,.csv">
-            <div class="drop-icon">📂</div>
-            <div class="drop-text">رها کنید یا <strong>کلیک کنید</strong></div>
-            <div style="font-size:11px;color:#9ca3af;margin-top:4px;">xlsx, xls, csv</div>
+    <!-- ══════ تب ۲: محصولات موجود در سایت ══════ -->
+    <div class="import-pane" id="pane-existing">
+        <div class="import-layout">
+
+            <div>
+                <div class="step-card">
+                    <div class="step-title"><span class="step-num">۱</span> تنظیمات اولیه</div>
+                    <div class="fg">
+                        <label>دسته‌بندی داخلی (اختیاری)</label>
+                        <select id="ex-sel-cat" class="fc" data-cat-picker>
+                            <option value="">— بدون دسته —</option>
+                            <?php foreach ($cats as $c): ?>
+                                <option value="<?php echo $c->id; ?>">
+                                    <?php echo $c->parent_name ? htmlspecialchars($c->parent_name) . ' / ' : ''; ?>
+                                    <?php echo htmlspecialchars($c->name); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:11.5px;color:#1e40af;">
+                        💡 شناسه اکسل باید همون شناسه‌ای باشه که در وردپرس به فرمت <code>P-{شناسه}</code> به عنوان SKU ذخیره شده.
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-title"><span class="step-num">۲</span> انتخاب فایل</div>
+                    <div class="drop-zone" id="ex-drop-zone">
+                        <input type="file" id="ex-file-input" accept=".xlsx,.xls,.csv">
+                        <div class="drop-icon">📂</div>
+                        <div class="drop-text">رها کنید یا <strong>کلیک کنید</strong></div>
+                        <div style="font-size:11px;color:#9ca3af;margin-top:4px;">xlsx, xls, csv</div>
+                    </div>
+                    <div id="ex-file-name" style="display:none;margin-top:8px;font-size:12px;color:#374151;text-align:center;"></div>
+                </div>
+            </div>
+
+            <div>
+                <div id="ex-alert-box"></div>
+
+                <div class="step-card" id="ex-col-map-card" style="display:none;">
+                    <div class="step-title"><span class="step-num">۳</span> تطبیق ستون‌ها</div>
+                    <div class="col-map" id="ex-col-map-wrap"></div>
+                    <div class="fg" style="margin-bottom:18px;">
+                        <label>ردیف header در فایل</label>
+                        <input type="number" id="ex-inp-header-row" class="fc" value="1" min="1" max="20">
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-success" id="ex-btn-import" style="flex:1;">⚡ شروع ایمپورت</button>
+                        <button class="btn btn-secondary" id="ex-btn-reset" title="ریست">🔄</button>
+                    </div>
+                </div>
+
+                <div class="step-card" id="ex-import-section" style="display:none;">
+                    <div class="step-title"><span class="step-num">۴</span> در حال ایمپورت...</div>
+                    <div class="stat-row">
+                        <div class="s-box"><div class="s-val" id="ex-st-total">0</div><div class="s-lbl">کل ردیف</div></div>
+                        <div class="s-box"><div class="s-val" id="ex-st-done" style="color:#16a34a;">0</div><div class="s-lbl">ثبت/آپدیت</div></div>
+                        <div class="s-box"><div class="s-val" id="ex-st-error" style="color:#dc2626;">0</div><div class="s-lbl">خطا</div></div>
+                    </div>
+                    <div style="font-size:12px;color:#6b7280;margin-bottom:4px;"><span id="ex-prog-text">0 از 0 (0%)</span></div>
+                    <div class="progress-wrap"><div class="progress-bar" id="ex-progress-bar"></div></div>
+                </div>
+
+                <!-- ── سینک جمعی با وردپرس ── -->
+                <div class="step-card">
+                    <div class="step-title"><span class="step-num">۵</span> همگام‌سازی جمعی با وردپرس</div>
+                    <p style="font-size:12.5px;color:#6b7280;margin-bottom:12px;">
+                        بعد از ایمپورت، برای گرفتن قیمت فروش واقعی، وزن، ابعاد و تصویر از سایت، دکمه زیر را بزنید.
+                    </p>
+                    <div class="stat-row">
+                        <div class="s-box"><div class="s-val" id="sync-remaining">—</div><div class="s-lbl">منتظر سینک</div></div>
+                        <div class="s-box"><div class="s-val" id="sync-done" style="color:#16a34a;">0</div><div class="s-lbl">سینک شده</div></div>
+                        <div class="s-box"><div class="s-val" id="sync-notfound" style="color:#d97706;">0</div><div class="s-lbl">یافت نشد</div></div>
+                    </div>
+                    <button class="btn btn-success" id="btn-bulk-sync" style="width:100%;">🔄 شروع همگام‌سازی جمعی</button>
+                </div>
+            </div>
+
         </div>
-        <div id="file-name" style="display:none;margin-top:8px;font-size:12px;color:#374151;text-align:center;"></div>
     </div>
-
-</div>
-
-<!-- ── ستون راست ── -->
-<div>
-
-    <div id="alert-box"></div>
-
-    <!-- mapping -->
-    <div class="step-card" id="col-map-card" style="display:none;">
-        <div class="step-title"><span class="step-num">۳</span> تطبیق ستون‌ها</div>
-
-        <div class="col-map" id="col-map-wrap"></div>
-
-        <div class="fg" style="margin-bottom:18px;">
-            <label>ردیف header در فایل</label>
-            <input type="number" id="inp-header-row" class="fc" value="1" min="1" max="20">
-        </div>
-
-        <div style="display:flex;gap:8px;">
-            <button class="btn btn-success" id="btn-import" style="flex:1;">
-                ⚡ شروع ایمپورت
-            </button>
-            <button class="btn btn-secondary" id="btn-reset" title="ریست">🔄</button>
-        </div>
-    </div>
-
-    <!-- progress -->
-    <div class="step-card" id="import-section" style="display:none;">
-        <div class="step-title"><span class="step-num">۴</span> در حال ایمپورت...</div>
-
-        <div class="stat-row">
-            <div class="s-box"><div class="s-val" id="st-total">0</div><div class="s-lbl">کل ردیف</div></div>
-            <div class="s-box"><div class="s-val" id="st-done" style="color:#16a34a;">0</div><div class="s-lbl">ثبت شده</div></div>
-            <div class="s-box"><div class="s-val" id="st-error" style="color:#dc2626;">0</div><div class="s-lbl">خطا</div></div>
-        </div>
-
-        <div style="font-size:12px;color:#6b7280;margin-bottom:4px;"><span id="prog-text">0 از 0 (0%)</span></div>
-        <div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
-
-        <div style="font-size:11px;color:#9ca3af;margin-top:8px;text-align:center;">
-            صفحه را نبندید تا ایمپورت تمام شود
-        </div>
-    </div>
-
-</div>
-</div>
 
 <?php
 $content = ob_get_clean();
@@ -174,6 +184,8 @@ $extra_js = '
     var CUR  = "' . $currency_symbol . '";
 </script>
 <script src="../assets/js/import-products.js"></script>
+<script src="../assets/js/import-existing-products.js"></script>
+
 ';
 require_once __DIR__ . '/layout.php';
 ?>

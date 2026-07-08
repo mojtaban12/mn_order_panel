@@ -27,6 +27,13 @@
         });
     });
 
+    window.switchImportTab = function (tab, btn) {
+        document.querySelectorAll('.import-tab').forEach(function (t) { t.classList.remove('active'); });
+        document.querySelectorAll('.import-pane').forEach(function (p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        document.getElementById('pane-' + tab).classList.add('active');
+    };
+
     // ── File ─────────────────────────────────
     var dropZone  = document.getElementById('drop-zone');
     var fileInput = document.getElementById('file-input');
@@ -201,26 +208,26 @@
                     rows:          batch,
                 }),
             })
-            .then(function(r){ return r.json(); })
-            .then(function(res){
-                if (res.success) {
-                    done   += res.done   || 0;
-                    errors += res.errors || 0;
-                } else {
+                .then(function(r){ return r.json(); })
+                .then(function(res){
+                    if (res.success) {
+                        done   += res.done   || 0;
+                        errors += res.errors || 0;
+                    } else {
+                        errors += batch.length;
+                    }
+                    document.getElementById('st-done').textContent  = done;
+                    document.getElementById('st-error').textContent = errors;
+                    updateProgress(offset, total);
+                    // batch بعدی
+                    setTimeout(next, 50);
+                })
+                .catch(function(err){
                     errors += batch.length;
-                }
-                document.getElementById('st-done').textContent  = done;
-                document.getElementById('st-error').textContent = errors;
-                updateProgress(offset, total);
-                // batch بعدی
-                setTimeout(next, 50);
-            })
-            .catch(function(err){
-                errors += batch.length;
-                document.getElementById('st-error').textContent = errors;
-                updateProgress(offset, total);
-                setTimeout(next, 50);
-            });
+                    document.getElementById('st-error').textContent = errors;
+                    updateProgress(offset, total);
+                    setTimeout(next, 50);
+                });
         }
 
         next();
