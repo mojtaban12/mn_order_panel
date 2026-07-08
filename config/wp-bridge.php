@@ -339,4 +339,40 @@ class MN_WP_Bridge {
         
         return null;
     }
+
+    /**
+     * پیدا کردن wp_product_id با SKU دقیق
+     */
+    public function find_id_by_sku($sku) {
+        $id = $this->get_var($this->prepare(
+            "SELECT post_id FROM {$this->wpdb->postmeta}
+             WHERE meta_key = '_sku' AND meta_value = %s LIMIT 1",
+            $sku
+        ));
+        return $id ? intval($id) : null;
+    }
+
+    /**
+     * درج/بروزرسانی یک postmeta بدون نیاز به wp-load
+     */
+    public function upsert_postmeta($post_id, $meta_key, $meta_value) {
+        $meta_id = $this->get_var($this->prepare(
+            "SELECT meta_id FROM {$this->wpdb->postmeta}
+             WHERE post_id = %d AND meta_key = %s LIMIT 1",
+            $post_id, $meta_key
+        ));
+
+        if ($meta_id) {
+            $this->query($this->prepare(
+                "UPDATE {$this->wpdb->postmeta} SET meta_value = %s WHERE meta_id = %d",
+                $meta_value, $meta_id
+            ));
+        } else {
+            $this->query($this->prepare(
+                "INSERT INTO {$this->wpdb->postmeta} (post_id, meta_key, meta_value) VALUES (%d, %s, %s)",
+                $post_id, $meta_key, $meta_value
+            ));
+        }
+    }
+
 }
