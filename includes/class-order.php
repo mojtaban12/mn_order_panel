@@ -31,18 +31,24 @@ class MN_Order {
             $this->db->begin_transaction();
             
             // 1. محاسبه مجموع
-            $total_amount = 0;
+            $items_subtotal = 0;
             foreach ($items as $item) {
-                $total_amount += floatval($item['quantity']) * floatval($item['price']);
+                $items_subtotal += floatval($item['quantity']) * floatval($item['price']);
             }
-            
+
+            $shipping_cost   = floatval($order_data['shipping_cost']   ?? 0);
+            $shipping_method = sanitize_text_field($order_data['shipping_method'] ?? '');
+            $total_amount    = $items_subtotal + $shipping_cost;
+
             // 2. درج سفارش
             $order_insert_data = [
-                'customer_id' => intval($order_data['customer_id']),
-                'panel_user_id' => intval($panel_user_id),
-                'total_amount' => $total_amount,
-                'order_notes' => sanitize_textarea_field($order_data['order_notes'] ?? ''),
-                'status' => 'pending'
+                'customer_id'     => intval($order_data['customer_id']),
+                'panel_user_id'   => intval($panel_user_id),
+                'total_amount'    => $total_amount,
+                'shipping_cost'   => $shipping_cost,
+                'shipping_method' => $shipping_method ?: null,
+                'order_notes'     => sanitize_textarea_field($order_data['order_notes'] ?? ''),
+                'status'          => 'pending'
             ];
             
             $order_id = $this->db->insert('mn_orders', $order_insert_data);

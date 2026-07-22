@@ -432,6 +432,25 @@ $order_id = intval($_GET['id']);
             $('#order-items').html(itemsHtml);
             
             // خلاصه مالی
+            const sh = order.shipping || {};
+            const shippingCost = parseFloat(sh.cost || 0);
+            const shippingMethod = sh.method || '';
+
+            let shippingRow = '';
+            if (shippingCost > 0) {
+                shippingRow = `
+                    <div class="summary-row">
+                        <span>🚚 حمل و نقل${shippingMethod ? ' (' + shippingMethod + ')' : ''}:</span>
+                        <span>${formatPrice(shippingCost)} تومان</span>
+                    </div>`;
+            } else if (shippingMethod) {
+                shippingRow = `
+                    <div class="summary-row text-success">
+                        <span>🚚 حمل و نقل (${shippingMethod}):</span>
+                        <span style="color:#10b981;font-weight:bold;">رایگان 🎉</span>
+                    </div>`;
+            }
+
             $('#order-summary').html(`
                 <div class="summary-box">
                     <div class="summary-row">
@@ -439,15 +458,15 @@ $order_id = intval($_GET['id']);
                         <span>${order.summary.items_count}</span>
                     </div>
                     <div class="summary-row">
-                        <span>جمع جزء:</span>
+                        <span>جمع محصولات:</span>
                         <span>${formatPrice(order.summary.subtotal)} تومان</span>
                     </div>
                     ${order.summary.discount > 0 ? `
-                    <div class="summary-row text-success">
+                    <div class="summary-row" style="color:#10b981;">
                         <span>تخفیف:</span>
                         <span>-${formatPrice(order.summary.discount)} تومان</span>
-                    </div>
-                    ` : ''}
+                    </div>` : ''}
+                    ${shippingRow}
                     <div class="summary-row summary-total">
                         <span>جمع کل:</span>
                         <span>${formatPrice(order.summary.total)} تومان</span>

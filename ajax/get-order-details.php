@@ -72,11 +72,13 @@ try {
     
     foreach ($items as $item) {
         $subtotal += $item->total;
-        // اگر قیمت با تخفیف داشتیم
         if (isset($item->original_price) && $item->original_price > $item->price) {
             $total_discount += ($item->original_price - $item->price) * $item->quantity;
         }
     }
+
+    $shipping_cost   = floatval($order->shipping_cost   ?? 0);
+    $shipping_method = $order->shipping_method ?? '';
     
     // دریافت لاگ‌های sync
     $sync_logs = $db->get_results(
@@ -119,10 +121,17 @@ try {
                 'wp_user_id' => $order->wp_user_id
             ],
             'items' => $items,
+            'shipping' => [
+                'cost'            => $shipping_cost,
+                'cost_formatted'  => number_format($shipping_cost),
+                'method'          => $shipping_method,
+                'is_free'         => ($shipping_cost == 0),
+            ],
             'summary' => [
-                'subtotal' => $subtotal,
-                'discount' => $total_discount,
-                'total' => $order->total_amount,
+                'subtotal'    => $subtotal,
+                'discount'    => $total_discount,
+                'shipping'    => $shipping_cost,
+                'total'       => $order->total_amount,
                 'items_count' => count($items)
             ]
         ],

@@ -62,13 +62,15 @@ try {
     $order_model = new MN_Order();
     
     // دریافت اطلاعات حمل و نقل
-    $shipping_cost = isset($input['shipping']['cost']) ? floatval($input['shipping']['cost']) : 0;
-    $shipping_weight = isset($input['shipping']['weight']) ? floatval($input['shipping']['weight']) : 0;
-    
+    $shipping       = $input['shipping'] ?? [];
+    $shipping_cost  = isset($shipping['cost'])         ? floatval($shipping['cost'])           : 0;
+    $shipping_title = isset($shipping['method_title']) ? sanitize_text($shipping['method_title']) : '';
+
     $order_data = [
-        'customer_id' => $customer_id,
-        'shipping_cost' => $shipping_cost,
-        'order_notes' => sanitize_textarea($input['order_notes'] ?? '')
+        'customer_id'     => $customer_id,
+        'shipping_cost'   => $shipping_cost,
+        'shipping_method' => $shipping_title,
+        'order_notes'     => sanitize_textarea($input['order_notes'] ?? '')
     ];
     
     // آماده‌سازی آیتم‌ها
