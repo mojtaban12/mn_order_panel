@@ -8,13 +8,10 @@
     let cart = [];
     let currentUserRoles = [];
     let currentWpUserId = null;
-    
-    // تنظیمات حمل و نقل
-    const SHIPPING_CONFIG = {
-        BASE_COST: 99000,           // هزینه ثابت
-        PER_KG_COST: 18000,         // هزینه به ازای هر کیلو
-        FREE_SHIPPING_THRESHOLD: 1000000  // بالای 1 میلیون رایگان
-    };
+
+    // ─── حمل و نقل انتخاب‌شده توسط ادمین ─────────────────────────
+    // null = هنوز انتخاب نشده | { cost, title, is_free, instance_id }
+    let selectedShipping = null;
 
     // ─── منبع سرچ محصول ───────────────────────────────────────────────────────
     // 'panel'  → جستجو از mn_products (پنل محلی) — حالت پیشفرض فعلی
@@ -171,35 +168,96 @@
         });
     }
 
-    // محاسبه حمل و نقل
-    function calculateShipping() {
-        const subtotal = cart.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-        
-        // رایگان اگه بالای 1 میلیون باشه
-        if (subtotal >= SHIPPING_CONFIG.FREE_SHIPPING_THRESHOLD) {
-            return {
-                cost: 0,
-                is_free: true,
-                weight: 0
-            };
-        }
-        
-        // محاسبه وزن کل
-        const totalWeight = cart.reduce((sum, item) => {
-            const itemWeightGrams = parseFloat(item.weight) || 0;
-            const itemWeightKg = itemWeightGrams / 1000; // تبدیل به کیلو
-            return sum + (itemWeightKg * item.quantity);
-        }, 0);
-        
-        // محاسبه هزینه
-        const shippingCost = SHIPPING_CONFIG.BASE_COST + (totalWeight * SHIPPING_CONFIG.PER_KG_COST);
-        
-        return {
-            cost: Math.round(shippingCost),
-            is_free: false,
-            weight: totalWeight
-        };
+    // ─── بارگذاری روش‌های حمل از وردپرس ─────────────────────────
+    function loadShippingMethods() {
+        $('#shipping-loading').show();
+        $('#shipping-error').hide();
+        $('#shipping-options').hide();
+        $('#shipping-manual').hide();
+
+        $.ajax({
+            url: MN_CONFIG.ajaxUrl + 'get-shipping-methods.php',
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                $('#shipping-loading').hide();
+
+                if (!data.success || !data.methods || data.methods.length === 0) {
+                    // اگه هیچ روشی از WP نیومد → ورودی دستی
+                    $('#shipping-manual').show();
+                    bindManualShipping();
+                    return;
+                }
+
+                renderShippingOptions(data.methods);
+                $('#shipping-options').show();
+            },
+            error: function() {
+                $('#shipping-loading').hide();
+                $('#shipping-error').show();
+            }
+        });
     }
+
+    function renderShippingOptions(methods) {
+        const $container = $('#shipping-options');
+        $container.empty();
+
+        methods.forEach(function(m) {
+            const priceLabel = m.is_free
+                ? '<span style="color:#10b981;font-weight:bold;">رایگان 🎉</span>'
+                : `<span style="color:#667eea;font-weight:bold;">${numberFormat(m.cost)} ${MN_CONFIG.currencySymbol}</span>`;
+
+            const $card = $(`
+                <label class="shipping-option-card" data-instance="${m.instance_id}" style="
+                    display: flex; align-items: center; gap: 12px;
+                    padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 10px;
+                    cursor: pointer; transition: all .2s; background: #fff;
+                ">
+                    <input type="radio" name="shipping_method" value="${m.instance_id}"
+                           data-cost="${m.cost}" data-title="${m.title}" data-is-free="${m.is_free ? 1 : 0}"
+                           style="accent-color:#667eea; width:18px; height:18px; flex-shrink:0;">
+                    <div style="flex:1;">
+                        <div style="font-weight:bold; font-size:14px;">${m.title}</div>
+                        ${m.zone_name ? `<div style="font-size:11px;color:#999;margin-top:2px;">${m.zone_name}</div>` : ''}
+                    </div>
+                    <div style="text-align:left; font-size:14px;">${priceLabel}</div>
+                </label>
+            `);
+
+            $container.append($card);
+        });
+
+        // وقتی گزینه‌ای انتخاب شد
+        $container.on('change', 'input[type=radio]', function() {
+            const $r = $(this);
+            selectedShipping = {
+                instance_id: $r.val(),
+                cost:        parseFloat($r.data('cost')),
+                title:       $r.data('title'),
+                is_free:     $r.data('is-free') == 1,
+                weight:      0
+            };
+
+            // استایل انتخاب
+            $container.find('.shipping-option-card').css({ borderColor: '#e2e8f0', background: '#fff' });
+            $r.closest('.shipping-option-card').css({ borderColor: '#667eea', background: '#f0f0ff' });
+
+            updateTotal();
+        });
+    }
+
+    function bindManualShipping() {
+        $('#shipping-manual-cost').on('input', function() {
+            const cost = parseFloat($(this).val()) || 0;
+            selectedShipping = { cost: cost, title: 'حمل دستی', is_free: cost === 0, weight: 0 };
+            updateTotal();
+        });
+    }
+
+    $('#retry-shipping').on('click', function() {
+        loadShippingMethods();
+    });
 
     function updateCartUI() {
         const $cartEmpty = $('#cart-empty');
@@ -278,16 +336,20 @@
 
     function updateTotal() {
         const subtotal = cart.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-        const shipping = calculateShipping();
-        const total = subtotal + shipping.cost;
-        
+
+        // حمل از گزینه انتخاب‌شده ادمین (نه محاسبه خودکار)
+        const shippingCost = selectedShipping ? selectedShipping.cost : 0;
+        const total = subtotal + shippingCost;
+
         let shippingHtml = '';
-        if (shipping.is_free) {
+        if (!selectedShipping) {
+            shippingHtml = '<span style="color:#aaa; font-size:13px;">— انتخاب نشده</span>';
+        } else if (selectedShipping.is_free) {
             shippingHtml = '<span style="color: #10b981;">رایگان 🎉</span>';
         } else {
-            shippingHtml = `${numberFormat(shipping.cost)} ${MN_CONFIG.currencySymbol}`;
+            shippingHtml = `${numberFormat(shippingCost)} ${MN_CONFIG.currencySymbol}`;
         }
-        
+
         $('#cart-total').html(`
             <div class="total-row">
                 <span>جمع محصولات:</span>
@@ -434,7 +496,17 @@
 
         const selectedState = stateCity ? stateCity.getSelectedState() : null;
         const selectedCity = stateCity ? stateCity.getSelectedCity() : null;
-        const shipping = calculateShipping();
+
+        // بررسی انتخاب روش حمل
+        if (!selectedShipping) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'روش حمل انتخاب نشده',
+                text: 'لطفاً یک روش حمل و نقل انتخاب کنید'
+            });
+            $('#shipping-section').get(0)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
 
         const formData = {
             customer: {
@@ -456,9 +528,11 @@
                 weight: item.weight || 0
             })),
             shipping: {
-                cost: shipping.cost,
-                weight: shipping.weight,
-                is_free: shipping.is_free
+                cost:        selectedShipping.cost,
+                weight:      selectedShipping.weight || 0,
+                is_free:     selectedShipping.is_free,
+                method_title: selectedShipping.title,
+                instance_id: selectedShipping.instance_id || null
             },
             order_notes: $('#order_notes').val().trim()
         };
@@ -518,6 +592,13 @@
         cart = [];
         currentWpUserId = null;
         currentUserRoles = null;
+        selectedShipping = null;
+
+        // ریست انتخاب حمل
+        $('#shipping-options input[type=radio]').prop('checked', false);
+        $('#shipping-options .shipping-option-card').css({ borderColor: '#e2e8f0', background: '#fff' });
+        $('#shipping-manual-cost').val('');
+
         if (stateCity) {
             stateCity.clearCities();
         }
@@ -633,5 +714,8 @@
             calculateTieredPrice(item, true);
         });
     }
+
+    // ─── بارگذاری اولیه روش‌های حمل ──────────────────────────────
+    loadShippingMethods();
 
 })(jQuery);

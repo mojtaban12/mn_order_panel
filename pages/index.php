@@ -127,6 +127,39 @@ ob_start();
                         <textarea id="order_notes" name="order_notes" rows="3" placeholder="توضیحات اضافی در مورد سفارش..."></textarea>
                     </div>
 
+                    <!-- ── بخش حمل و نقل ───────────────────────────────── -->
+                    <div class="form-group" id="shipping-section">
+                        <label>
+                            <span class="icon">🚚</span>
+                            روش حمل و نقل
+                            <span class="required">*</span>
+                        </label>
+
+                        <!-- حالت بارگذاری -->
+                        <div id="shipping-loading" style="padding: 10px; color: #888; font-size: 14px;">
+                            ⏳ در حال دریافت روش‌های حمل...
+                        </div>
+
+                        <!-- خطا -->
+                        <div id="shipping-error" style="display:none; padding: 10px; color: #e74c3c; font-size: 14px; background: #fff5f5; border-radius: 6px; border: 1px solid #fed7d7;">
+                            ⚠️ خطا در دریافت روش‌های حمل.
+                            <button type="button" id="retry-shipping" style="margin-right: 8px; background: none; border: none; color: #667eea; cursor: pointer; text-decoration: underline;">تلاش مجدد</button>
+                        </div>
+
+                        <!-- لیست گزینه‌ها (با JS پر می‌شه) -->
+                        <div id="shipping-options" style="display:none; display: flex; flex-direction: column; gap: 8px; margin-top: 6px;">
+                            <!-- کارت‌های حمل اینجا رندر می‌شن -->
+                        </div>
+
+                        <!-- حمل دستی — اگه هیچ گزینه‌ای از WP نیومد -->
+                        <div id="shipping-manual" style="display:none; margin-top: 8px;">
+                            <input type="number" id="shipping-manual-cost" min="0" step="1000"
+                                   placeholder="هزینه حمل را وارد کنید (تومان)"
+                                   style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 14px;">
+                        </div>
+                    </div>
+                    <!-- ── پایان بخش حمل ────────────────────────────────── -->
+
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary btn-submit" id="submit-order" disabled>
                             <span class="icon">✅</span>

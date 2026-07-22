@@ -3,6 +3,8 @@
  * MN Order Panel - Panel Product Search Ajax Handler
  * جستجوی محصولات از دیتابیس پنل (mn_products)
  * این فایل جایگزین product-search.php (وردپرس) شده
+ *
+ * ویژگی: نرمالایز‌سازی خودکار کاراکترهای عربی/فارسی در جستجو
  */
 
 error_reporting(E_ALL);
@@ -21,6 +23,48 @@ if (!isset($_GET['q'])) {
 
 require_once __DIR__ . '/../config/database.php';
 
+// ════════════════════════════════════════════════════════════════
+//  توابع نرمالایز‌سازی عربی ↔ فارسی
+// ════════════════════════════════════════════════════════════════
+
+/**
+ * نرمالایز ترم سرچ به فارسی استاندارد
+ * ك→ک | ي→ی | ى→ی | ة→ه | اعداد عربی→فارسی
+ * (فقط برای ترم سرچ، دیتابیس دست‌نخورده می‌مونه)
+ */
+function normalize_search_term(string $s): string {
+    $ar = ['ك', 'ي', 'ى', 'ة', 'ؤ', 'ئ',
+           '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩', '٠'];
+    $fa = ['ک', 'ی', 'ی', 'ه', 'و', 'ی',
+           '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹', '۰'];
+    return str_replace($ar, $fa, $s);
+}
+
+/**
+ * برمی‌گردونه یه عبارت SQL که ستون داده‌شده رو نرمالایز می‌کنه
+ * مثال: normalize_col_sql('p.title')
+ *   → REPLACE(REPLACE(REPLACE(REPLACE(p.title,'ي','ی'),'ك','ک'),'ى','ی'),'ة','ه')
+ * اینطوری حتی مقادیر مخلوط (مثل کاليکو) هم پیدا می‌شن
+ */
+function normalize_col_sql(string $col): string {
+    // جفت‌های [عربی، فارسی] که باید جایگزین بشن
+    $pairs = [
+        ['ي', 'ی'],
+        ['ك', 'ک'],
+        ['ى', 'ی'],
+        ['ة', 'ه'],
+        ['ؤ', 'و'],
+        ['ئ', 'ی'],
+    ];
+    $expr = $col;
+    foreach ($pairs as [$ar, $fa]) {
+        $expr = "REPLACE({$expr}, '{$ar}', '{$fa}')";
+    }
+    return $expr;
+}
+
+// ════════════════════════════════════════════════════════════════
+
 try {
     $search_term = trim($_GET['q']);
     $page        = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
@@ -37,17 +81,24 @@ try {
         exit;
     }
 
-    $db   = MN_Database::get_instance();
-    $like = '%' . $search_term . '%';
-    $id_search = intval($search_term); // جستجو بر اساس شناسه عددی
+    $db        = MN_Database::get_instance();
+    $id_search = intval($search_term);
 
-    // --- جستجو در پنل محلی ---
-    // جستجو بر اساس عنوان، SKU، شناسه پنل، و شناسه وردپرس
-    $where = "(p.title LIKE ? OR p.sku LIKE ?";
+    // ترم سرچ رو به فارسی استاندارد نرمالایز می‌کنیم
+    // (چه با کیبورد فارسی تایپ شده باشه چه عربی)
+    $norm_term = normalize_search_term($search_term);
+    $like      = '%' . $norm_term . '%';
+
+    // در SQL، ستون title/sku هم نرمالایز می‌شه قبل از مقایسه
+    // → حتی مقادیر مخلوط مثل «کاليکو» هم پیدا می‌شن
+    $title_norm = normalize_col_sql('p.title');
+    $sku_norm   = normalize_col_sql('p.sku');
+
     $params = [$like, $like];
+    $where  = "({$title_norm} LIKE ? OR {$sku_norm} LIKE ?";
 
     if ($id_search > 0) {
-        $where .= " OR p.id = ? OR p.wp_product_id = ?";
+        $where   .= " OR p.id = ? OR p.wp_product_id = ?";
         $params[] = $id_search;
         $params[] = $id_search;
     }
