@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="373c4a47-e413-4688-be29-210e937b2a57" name="Changes" comment="feat: sync real+virtual stock sum to WooCommerce; deduct real stock before virtual on order sync">
+      <change beforePath="$PROJECT_DIR$/ajax/import-existing-batch.php" beforeDir="false" afterPath="$PROJECT_DIR$/ajax/import-existing-batch.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/import-products.php" beforeDir="false" afterPath="$PROJECT_DIR$/pages/import-products.php" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ChangesViewManager" show_ignored="true" />
+  <component name="ComposerSettings">
+    <execution />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="JavaScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="3Fwj08GEnrFU8RUJJEp6LEkWeOI" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="ASKED_SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="D:/Project/iRun_Front_Refactor" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="vue.rearranger.settings.migration" value="true" />
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="373c4a47-e413-4688-be29-210e937b2a57" name="Changes" comment="" />
+      <created>1782992805272</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1782992805272</updated>
+      <workItem from="1782992819423" duration="2785000" />
+      <workItem from="1783495420651" duration="3925000" />
+      <workItem from="1784647939777" duration="230000" />
+    </task>
+    <task id="LOCAL‎۰۰۰۰۱" summary="remove internal resource">
+      <created>1782992883953</created>
+      <option name="number" value="LOCAL‎۰۰۰۰۱" />
+      <option name="presentableId" value="LOCAL‎۰۰۰۰۱" />
+      <updated>1782992883953</updated>
+    </task>
+    <task id="LOCAL‎۰۰۰۰۲" summary="add logout + resolve add product problem">
+      <created>1782994626809</created>
+      <option name="number" value="LOCAL‎۰۰۰۰۲" />
+      <option name="presentableId" value="LOCAL‎۰۰۰۰۲" />
+      <updated>1782994626809</updated>
+    </task>
+    <task id="LOCAL‎۰۰۰۰۳" summary="feat: sync real+virtual stock sum to WooCommerce; deduct real stock before virtual on order sync">
+      <created>1782994975592</created>
+      <option name="number" value="LOCAL‎۰۰۰۰۳" />
+      <option name="presentableId" value="LOCAL‎۰۰۰۰۳" />
+      <updated>1782994975592</updated>
+    </task>
+    <task id="LOCAL‎۰۰۰۰۴" summary="feat: sync real+virtual stock sum to WooCommerce; deduct real stock before virtual on order sync">
+      <created>1783496484106</created>
+      <option name="number" value="LOCAL‎۰۰۰۰۴" />
+      <option name="presentableId" value="LOCAL‎۰۰۰۰۴" />
+      <updated>1783496484106</updated>
+    </task>
+    <task id="LOCAL‎۰۰۰۰۵" summary="add multiple sync products on batch size">
+      <created>1783503065490</created>
+      <option name="number" value="LOCAL‎۰۰۰۰۵" />
+      <option name="presentableId" value="LOCAL‎۰۰۰۰۵" />
+      <updated>1783503065490</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="remove internal resource" />
+    <MESSAGE value="add logout + resolve add product problem" />
+    <MESSAGE value="feat: sync real+virtual stock sum to WooCommerce; deduct real stock before virtual on order sync" />
+    <MESSAGE value="add multiple sync products on batch size" />
+    <option name="LAST_COMMIT_MESSAGE" value="add multiple sync products on batch size" />
+  </component>
+</project>

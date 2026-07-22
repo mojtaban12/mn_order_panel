@@ -16,9 +16,37 @@
         FREE_SHIPPING_THRESHOLD: 1000000  // بالای 1 میلیون رایگان
     };
 
+    // ─── منبع سرچ محصول ───────────────────────────────────────────────────────
+    // 'panel'  → جستجو از mn_products (پنل محلی) — حالت پیشفرض فعلی
+    // 'wp'     → جستجو از وردپرس/ووکامرس (product-search.php)
+    // بعداً این رو به یه سوییچ UI تبدیل می‌کنیم
+    const PRODUCT_SEARCH_SOURCE = 'panel';
+
+    function getProductSearchUrl() {
+        if (PRODUCT_SEARCH_SOURCE === 'wp') {
+            return MN_CONFIG.ajaxUrl + 'product-search.php';
+        }
+        return MN_CONFIG.ajaxUrl + 'panel-product-search.php';
+    }
+
+    // تبدیل تصویر محصول به URL قابل نمایش
+    // - اگه از پنل بیاد: image_url کامله (https://...) یا خالی
+    // - اگه از وردپرس بیاد: مسیر نسبی زیر wp-content/uploads/
+    function resolveProductImage(product) {
+        const img = product.image || '';
+        if (!img) return 'assets/img/no-image.png';
+
+        if (product.image_source === 'panel') {
+            // آدرس کامل یا نسبی از پنل
+            return img.startsWith('http') ? img : ('assets/img/no-image.png');
+        }
+        // وردپرس: مسیر نسبی — پیشوند آدرس آپلودها رو اضافه می‌کنیم
+        return 'https://puonak.com/wp-content/uploads/' + img;
+    }
+
     $('#product-search').select2({
         ajax: {
-            url: MN_CONFIG.ajaxUrl + 'product-search.php',
+            url: getProductSearchUrl(),
             dataType: 'json',
             delay: 250,
             data: function(params) {
@@ -73,7 +101,7 @@
         
         return $(`
             <div class="product-result" style="display: flex; gap: 10px; padding: 5px;">
-                <img src="https://puonak.com/wp-content/uploads/${product.image}" style="width: 50px; height: 50px; border-radius: 5px; object-fit: cover;">
+                <img src="${resolveProductImage(product)}" style="width: 50px; height: 50px; border-radius: 5px; object-fit: cover;">
                 <div style="flex: 1;">
                     <div style="font-weight: bold;">${product.text}</div>
                     <div style="font-size: 12px; color: #999;">SKU: ${product.sku}</div>
@@ -123,7 +151,7 @@
                 price_formatted: product.price_formatted,
                 quantity: 1,
                 weight: parseFloat(product.weight) || 0,
-                image: "https://puonak.com/wp-content/uploads/" + product.image
+                image: resolveProductImage(product)
             };
             
             cart.push(newItem);

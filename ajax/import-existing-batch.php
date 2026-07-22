@@ -33,6 +33,8 @@ try {
         $quantity   = intval($row['quantity'] ?? 0);
         $purchase_p = ($row['purchase_price'] ?? '') !== '' ? floatval($row['purchase_price']) : null;
         $regular_p  = ($row['regular_price']  ?? '') !== '' ? floatval($row['regular_price'])  : null;
+        $sale_p     = ($row['sale_price']       ?? '') !== '' ? floatval($row['sale_price'])       : null;
+        $disc_pct   = ($row['discount_percent'] ?? '') !== '' ? floatval($row['discount_percent']) : null;
 
         $numeric_id = preg_replace('/[^0-9]/', '', $excel_id);
 
@@ -58,6 +60,9 @@ try {
                 $update = ['real_stock_quantity' => $stock_after];
                 if ($purchase_p !== null) $update['purchase_price'] = $purchase_p;
                 if ($regular_p  !== null) $update['regular_price']  = $regular_p;
+                if ($sale_p     !== null) $update['sale_price']       = $sale_p;
+                if ($disc_pct   !== null) $update['discount_percent'] = $disc_pct;
+
 
                 $db->update('mn_products', $update, ['id' => $existing->id]);
 
@@ -83,6 +88,8 @@ try {
                     'sku'                 => $sku,
                     'regular_price'       => $regular_p ?? 0,
                     'purchase_price'      => $purchase_p,
+                    'sale_price'          => $sale_p,
+                    'discount_percent'    => $disc_pct,
                     'real_stock_quantity' => $quantity,
                     'stock_quantity'      => 0,
                     'stock_status'        => 'instock',
@@ -105,6 +112,7 @@ try {
                     'notes'           => 'ایمپورت محصول موجود در سایت — SKU: ' . $sku,
                     'created_by'      => $panel_user_id,
                 ]);
+
 
                 $created++;
                 $results[] = ['success' => true, 'product_id' => $product_id, 'mode' => 'create'];

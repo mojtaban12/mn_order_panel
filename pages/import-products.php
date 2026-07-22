@@ -86,9 +86,79 @@ ob_start();
     </div>
 
     <!-- ══════ تب ۱: محصول جدید (موجود — بدون تغییر) ══════ -->
+    <!-- ══════ تب ۱: محصول کاملاً جدید ══════ -->
     <div class="import-pane active" id="pane-new">
         <div class="import-layout">
-            <!-- همون محتوای فعلی import-layout شما اینجا -->
+
+            <div>
+                <div class="step-card">
+                    <div class="step-title"><span class="step-num">۱</span> اطلاعات فاکتور</div>
+
+                    <div class="fg">
+                        <label>دسته‌بندی داخلی <span style="color:#ef4444">*</span></label>
+                        <select id="sel-cat" class="fc" data-cat-picker>
+                            <option value="">— انتخاب دسته —</option>
+                            <?php foreach ($cats as $c): ?>
+                                <option value="<?php echo $c->id; ?>">
+                                    <?php echo $c->parent_name ? htmlspecialchars($c->parent_name) . ' / ' : ''; ?>
+                                    <?php echo htmlspecialchars($c->name); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="fg">
+                        <label>نام فروشنده <span style="color:#ef4444">*</span></label>
+                        <input type="text" id="inp-supplier" class="fc" placeholder="نام تأمین‌کننده">
+                    </div>
+
+                    <div class="fg" style="margin-bottom:0;">
+                        <label>تاریخ فاکتور <span style="color:#ef4444">*</span></label>
+                        <input type="hidden" id="inp-date-val">
+                        <input type="text" id="inp-date-display" class="fc" placeholder="انتخاب تاریخ شمسی" readonly style="cursor:pointer;">
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-title"><span class="step-num">۲</span> انتخاب فایل اکسل</div>
+                    <div class="drop-zone" id="drop-zone">
+                        <input type="file" id="file-input" accept=".xlsx,.xls,.csv">
+                        <div class="drop-icon">📂</div>
+                        <div class="drop-text">رها کنید یا <strong>کلیک کنید</strong></div>
+                        <div style="font-size:11px;color:#9ca3af;margin-top:4px;">xlsx, xls, csv</div>
+                    </div>
+                    <div id="file-name" style="display:none;margin-top:8px;font-size:12px;color:#374151;text-align:center;"></div>
+                </div>
+            </div>
+
+            <div>
+                <div id="alert-box"></div>
+
+                <div class="step-card" id="col-map-card" style="display:none;">
+                    <div class="step-title"><span class="step-num">۳</span> تطبیق ستون‌ها</div>
+                    <div class="col-map" id="col-map-wrap"></div>
+                    <div class="fg" style="margin-bottom:18px;">
+                        <label>ردیف header در فایل</label>
+                        <input type="number" id="inp-header-row" class="fc" value="1" min="1" max="20">
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-success" id="btn-import" style="flex:1;">⚡ شروع ایمپورت</button>
+                        <button class="btn btn-secondary" id="btn-reset" title="ریست">🔄</button>
+                    </div>
+                </div>
+
+                <div class="step-card" id="import-section" style="display:none;">
+                    <div class="step-title"><span class="step-num">۴</span> در حال ایمپورت...</div>
+                    <div class="stat-row">
+                        <div class="s-box"><div class="s-val" id="st-total">0</div><div class="s-lbl">کل ردیف</div></div>
+                        <div class="s-box"><div class="s-val" id="st-done" style="color:#16a34a;">0</div><div class="s-lbl">ثبت شده</div></div>
+                        <div class="s-box"><div class="s-val" id="st-error" style="color:#dc2626;">0</div><div class="s-lbl">خطا</div></div>
+                    </div>
+                    <div style="font-size:12px;color:#6b7280;margin-bottom:4px;"><span id="prog-text">0 از 0 (0%)</span></div>
+                    <div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+                </div>
+            </div>
+
         </div>
     </div>
 
