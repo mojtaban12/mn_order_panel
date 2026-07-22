@@ -170,20 +170,30 @@
 
     // ─── بارگذاری روش‌های حمل از وردپرس ─────────────────────────
     function loadShippingMethods() {
+        const stateName = getSelectedStateName();
+        const totalWeightGrams = getTotalWeightGrams();
+
         $('#shipping-loading').show();
         $('#shipping-error').hide();
-        $('#shipping-options').hide();
+        $('#shipping-options').hide().empty();
         $('#shipping-manual').hide();
+
+        // ریست انتخاب قبلی
+        selectedShipping = null;
+        updateTotal();
 
         $.ajax({
             url: MN_CONFIG.ajaxUrl + 'get-shipping-methods.php',
             type: 'GET',
             dataType: 'json',
+            data: {
+                state_name: stateName,
+                weight:     totalWeightGrams
+            },
             success: function(data) {
                 $('#shipping-loading').hide();
 
                 if (!data.success || !data.methods || data.methods.length === 0) {
-                    // اگه هیچ روشی از WP نیومد → ورودی دستی
                     $('#shipping-manual').show();
                     bindManualShipping();
                     return;
@@ -199,29 +209,63 @@
         });
     }
 
+    // نام استان انتخاب‌شده (متن option، نه value)
+    function getSelectedStateName() {
+        const $opt = $('#state option:selected');
+        if (!$opt.val()) return '';
+        return $opt.text().trim();
+    }
+
+    // وزن کل سبد به گرم
+    function getTotalWeightGrams() {
+        return cart.reduce(function(sum, item) {
+            return sum + (parseFloat(item.weight) || 0) * item.quantity;
+        }, 0);
+    }
+
     function renderShippingOptions(methods) {
         const $container = $('#shipping-options');
         $container.empty();
 
         methods.forEach(function(m) {
-            const priceLabel = m.is_free
-                ? '<span style="color:#10b981;font-weight:bold;">رایگان 🎉</span>'
-                : `<span style="color:#667eea;font-weight:bold;">${numberFormat(m.cost)} ${MN_CONFIG.currencySymbol}</span>`;
+            let priceLabel = '';
+            let costValue  = m.cost !== null ? m.cost : 0;
+
+            if (m.is_weight_based && m.cost === null) {
+                // wbs بدون اطلاعات rate → فقط badge نشون بده
+                priceLabel = '<span style="background:#f0f9ff;color:#0ea5e9;padding:2px 8px;border-radius:10px;font-size:12px;">⚖️ بر اساس وزن</span>';
+            } else if (m.is_free || m.cost === 0) {
+                priceLabel = '<span style="color:#10b981;font-weight:bold;">رایگان 🎉</span>';
+                costValue  = 0;
+            } else {
+                priceLabel = `<span style="color:#667eea;font-weight:bold;">${numberFormat(m.cost)} ${MN_CONFIG.currencySymbol}</span>`;
+            }
+
+            const wbsInput = m.is_weight_based && m.cost === null
+                ? `<input type="number" class="wbs-cost-input" placeholder="هزینه (تومان)"
+                          min="0" step="1000"
+                          style="margin-top:6px;width:100%;padding:6px 10px;border:1px dashed #0ea5e9;
+                                 border-radius:6px;font-family:inherit;font-size:13px;display:none;">`
+                : '';
 
             const $card = $(`
                 <label class="shipping-option-card" data-instance="${m.instance_id}" style="
-                    display: flex; align-items: center; gap: 12px;
+                    display: flex; align-items: flex-start; gap: 12px;
                     padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 10px;
                     cursor: pointer; transition: all .2s; background: #fff;
                 ">
                     <input type="radio" name="shipping_method" value="${m.instance_id}"
-                           data-cost="${m.cost}" data-title="${m.title}" data-is-free="${m.is_free ? 1 : 0}"
-                           style="accent-color:#667eea; width:18px; height:18px; flex-shrink:0;">
+                           data-cost="${costValue}"
+                           data-title="${m.title}"
+                           data-is-free="${(m.is_free || m.cost === 0) ? 1 : 0}"
+                           data-is-weight-based="${m.is_weight_based ? 1 : 0}"
+                           style="accent-color:#667eea; width:18px; height:18px; flex-shrink:0; margin-top:2px;">
                     <div style="flex:1;">
                         <div style="font-weight:bold; font-size:14px;">${m.title}</div>
-                        ${m.zone_name ? `<div style="font-size:11px;color:#999;margin-top:2px;">${m.zone_name}</div>` : ''}
+                        ${m.zone_name ? `<div style="font-size:11px;color:#aaa;margin-top:2px;">${m.zone_name}</div>` : ''}
+                        ${wbsInput}
                     </div>
-                    <div style="text-align:left; font-size:14px;">${priceLabel}</div>
+                    <div style="text-align:left; font-size:14px; white-space:nowrap;">${priceLabel}</div>
                 </label>
             `);
 
@@ -229,21 +273,38 @@
         });
 
         // وقتی گزینه‌ای انتخاب شد
-        $container.on('change', 'input[type=radio]', function() {
-            const $r = $(this);
-            selectedShipping = {
-                instance_id: $r.val(),
-                cost:        parseFloat($r.data('cost')),
-                title:       $r.data('title'),
-                is_free:     $r.data('is-free') == 1,
-                weight:      0
-            };
+        $container.off('change', 'input[type=radio]').on('change', 'input[type=radio]', function() {
+            const $r   = $(this);
+            const $card = $r.closest('.shipping-option-card');
+            const isWbs = $r.data('is-weight-based') == 1 && parseFloat($r.data('cost')) === 0 && !$r.data('is-free');
 
-            // استایل انتخاب
             $container.find('.shipping-option-card').css({ borderColor: '#e2e8f0', background: '#fff' });
-            $r.closest('.shipping-option-card').css({ borderColor: '#667eea', background: '#f0f0ff' });
+            $card.css({ borderColor: '#667eea', background: '#f0f0ff' });
 
+            // اگه wbs با cost نامشخص → input رو نشون بده
+            $container.find('.wbs-cost-input').hide();
+            if (isWbs) {
+                $card.find('.wbs-cost-input').show().trigger('focus');
+            }
+
+            selectedShipping = {
+                instance_id:      $r.val(),
+                cost:             parseFloat($r.data('cost')) || 0,
+                title:            $r.data('title'),
+                is_free:          $r.data('is-free') == 1,
+                is_weight_based:  $r.data('is-weight-based') == 1,
+                weight:           getTotalWeightGrams()
+            };
             updateTotal();
+        });
+
+        // وقتی cost wbs دستی وارد شد
+        $container.off('input', '.wbs-cost-input').on('input', '.wbs-cost-input', function() {
+            if (selectedShipping && selectedShipping.is_weight_based) {
+                selectedShipping.cost    = parseFloat($(this).val()) || 0;
+                selectedShipping.is_free = selectedShipping.cost === 0;
+                updateTotal();
+            }
         });
     }
 
@@ -255,7 +316,10 @@
         });
     }
 
-    $('#retry-shipping').on('click', function() {
+    $('#retry-shipping').on('click', loadShippingMethods);
+
+    // ── وقتی استان عوض شد → روش‌های حمل رو reload کن ───────────
+    $('#state').on('change', function() {
         loadShippingMethods();
     });
 
